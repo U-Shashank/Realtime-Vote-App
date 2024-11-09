@@ -28,7 +28,7 @@ const subRedis = new ioredis_1.Redis(process.env.REDIS_CONNECTION_STRING);
 const server = http_1.default.createServer(app);
 const io = new socket_io_1.Server(server, {
     cors: {
-        origin: ["http://localhost:3000", process.env.CLIENT_URL],
+        origin: [process.env.CLIENT_URL],
         methods: ["GET", "POST"],
         credentials: true,
     },

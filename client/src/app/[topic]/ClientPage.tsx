@@ -12,7 +12,7 @@ import { useMutation } from "@tanstack/react-query"
 import { submitComment } from "../actions"
 import { io } from "socket.io-client"
 
-const socket = io(process.env.HOST_URL || "http://localhost:8080")
+const socket = io(process.env.HOST_URL as string)
 
 interface ClientPageProps {
   topicName: string
