@@ -8,9 +8,8 @@ interface PageProps {
 }
 
 const Page = async ({ params }: PageProps) => { 
-  const { topic } = await params
+  const { topic } = params
 
-  // [redis, 3, is, 2, great, 6]
   const initialData = await redis.zrange<(string | number)[]>(
     `room:${topic}`,
     0,
