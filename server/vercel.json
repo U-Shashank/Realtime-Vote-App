@@ -16,9 +16,6 @@
     "build": {
         "env": {
             "NODE_ENV": "production"
-        },
-        "commands": {
-            "build": "npm run build"
         }
     }
 }
