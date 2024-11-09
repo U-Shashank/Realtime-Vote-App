@@ -20,7 +20,7 @@ const ioredis_1 = require("ioredis");
 require("dotenv/config");
 const app = (0, express_1.default)();
 app.use((0, cors_1.default)());
-app.get("/", (req, res) => {
+app.get("/", (_req, res) => {
     res.send("Welcome to the server!");
 });
 const redis = new ioredis_1.Redis(process.env.REDIS_CONNECTION_STRING);

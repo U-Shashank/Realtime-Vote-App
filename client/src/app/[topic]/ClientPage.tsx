@@ -12,7 +12,7 @@ import { useMutation } from "@tanstack/react-query"
 import { submitComment } from "../actions"
 import { io } from "socket.io-client"
 
-const socket = io(process.env.HOST_URL as string)
+const socket = io(process.env.NEXT_PUBLIC_HOST_URL as string)
 
 interface ClientPageProps {
   topicName: string
@@ -26,7 +26,7 @@ const ClientPage = ({ topicName, initialData }: ClientPageProps) => {
   const [input, setInput] = useState<string>("")
 
   useEffect(() => {
-    socket.emit("join-room", `room:${topicName}`)
+    socket.emit("join-room", `room:${topicName}`)    
   }, [topicName])
 
   useEffect(() => {

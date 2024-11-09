@@ -8,7 +8,7 @@ import "dotenv/config"
 const app = express()
 app.use(cors())
 
-app.get("/", (req, res) => {
+app.get("/", (_req, res) => {
   res.send("Welcome to the server!");
 })
 
