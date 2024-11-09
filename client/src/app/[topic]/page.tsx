@@ -2,12 +2,13 @@ import { redis } from "@/lib/redis"
 import ClientPage from "./ClientPage"
 
 interface PageProps {
-  params: {
+  params: Promise<{
     topic: string
-  }
+  }>
 }
 
-const Page = async ({ params }: PageProps) => { 
+const Page = async (props: PageProps) => {
+  const params = await props.params
   const { topic } = params
 
   const initialData = await redis.zrange<(string | number)[]>(
