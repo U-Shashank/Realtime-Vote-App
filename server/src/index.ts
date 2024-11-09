@@ -8,6 +8,10 @@ import "dotenv/config"
 const app = express()
 app.use(cors())
 
+app.get("/", (req, res) => {
+  res.send("Welcome to the server!");
+})
+
 const redis = new Redis(process.env.REDIS_CONNECTION_STRING as string)
 const subRedis = new Redis(process.env.REDIS_CONNECTION_STRING as string)
 
