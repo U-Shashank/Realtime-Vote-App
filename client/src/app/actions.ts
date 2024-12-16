@@ -20,13 +20,17 @@ export const createTopic = async ({ topicName }: { topicName: string }) => {
 }
 
 function wordFreq(text: string): { text: string; value: number }[] {
-  const words: string[] = text.replace(/\./g, "").split(/\s/)
-  const freqMap: Record<string, number> = {}
+  const words: string[] = text.toLowerCase()
+    .replace(/[^\w\s]/g, '')  
+    .split(/\s+/)
+    .filter(word => word.length > 1)  
 
+  const freqMap: Record<string, number> = {}
   for (const w of words) {
     if (!freqMap[w]) freqMap[w] = 0
     freqMap[w] += 1
   }
+
   return Object.keys(freqMap).map((word) => ({
     text: word,
     value: freqMap[word],
@@ -41,7 +45,7 @@ export const submitComment = async ({
   topicName: string
 }) => {
   const words = wordFreq(comment)
-
+  
   await Promise.all(
     words.map(async (word) => {
       await redis.zadd(
@@ -53,8 +57,8 @@ export const submitComment = async ({
   )
 
   await redis.incr("served-requests")
-
-  await redis.publish(`room:${topicName}`, words)
+  
+  await redis.publish(`room:${topicName}`, JSON.stringify(words))
 
   return comment
 }

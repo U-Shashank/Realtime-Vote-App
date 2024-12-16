@@ -8,10 +8,6 @@ import "dotenv/config"
 const app = express()
 app.use(cors())
 
-app.get("/", (_req, res) => {
-  res.send("Welcome to the server!");
-})
-
 const redis = new Redis(process.env.REDIS_CONNECTION_STRING as string)
 const subRedis = new Redis(process.env.REDIS_CONNECTION_STRING as string)
 
@@ -25,7 +21,12 @@ const io = new Server(server, {
 })
 
 subRedis.on("message", (channel, message) => {
-  io.to(channel).emit("room-update", message)
+  try {
+    const parsedMessage = JSON.parse(message)
+    io.to(channel).emit("room-update", message)
+  } catch (error) {
+    console.error("Error parsing message:", error)
+  }
 })
 
 subRedis.on("error", (err) => {
@@ -37,32 +38,23 @@ io.on("connection", async (socket) => {
 
   socket.on("join-room", async (room: string) => {
     console.log("User joined room:", room)
-
     const subscribedRooms = await redis.smembers("subscribed-rooms")
+
     await socket.join(room)
     await redis.sadd(`rooms:${id}`, room)
     await redis.hincrby("room-connections", room, 1)
 
     if (!subscribedRooms.includes(room)) {
-      subRedis.subscribe(room, async (err) => {
-        if (err) {
-          console.error("Failed to subscribe:", err)
-        } else {
-          await redis.sadd("subscribed-rooms", room)
-
-          console.log("Subscribed to room:", room)
-        }
-      })
+      await subRedis.subscribe(room)
+      await redis.sadd("subscribed-rooms", room)
     }
   })
 
   socket.on("disconnect", async () => {
-    const { id } = socket
-
     const joinedRooms = await redis.smembers(`rooms:${id}`)
     await redis.del(`rooms:${id}`)
 
-    joinedRooms.forEach(async (room) => {
+    for (const room of joinedRooms) {
       const remainingConnections = await redis.hincrby(
         `room-connections`,
         room,
@@ -71,23 +63,14 @@ io.on("connection", async (socket) => {
 
       if (remainingConnections <= 0) {
         await redis.hdel(`room-connections`, room)
-
-        subRedis.unsubscribe(room, async (err) => {
-          if (err) {
-            console.error("Failed to unsubscribe", err)
-          } else {
-            await redis.srem("subscribed-rooms", room)
-
-            console.log("Unsubscribed from room:", room)
-          }
-        })
+        await subRedis.unsubscribe(room)
+        await redis.srem("subscribed-rooms", room)
       }
-    })
+    }
   })
 })
 
 const PORT = process.env.PORT || 8080
-
 server.listen(PORT, () => {
   console.log(`Server is listening on port: ${PORT}`)
 })

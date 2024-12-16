@@ -31,38 +31,40 @@ const ClientPage = ({ topicName, initialData }: ClientPageProps) => {
 
   useEffect(() => {
     socket.on("room-update", (message: string) => {
-      const data = JSON.parse(message) as {
-        text: string
-        value: number
-      }[]
-
-      data.map((newWord) => {
-        const isWordAlreadyIncluded = words.some(
-          (word) => word.text === newWord.text
-        )
-
-        if (isWordAlreadyIncluded) {
-          // increment
-          setWords((prev) => {
-            const before = prev.find((word) => word.text === newWord.text)
-            const rest = prev.filter((word) => word.text !== newWord.text)
-
-            return [
-              ...rest,
-              { text: before!.text, value: before!.value + newWord.value },
-            ]
-          })
-        } else if (words.length < 50) {
-          // add to state
-          setWords((prev) => [...prev, newWord])
-        }
-      })
+      try {
+        const data = JSON.parse(message) as {
+          text: string
+          value: number
+        }[]
+  
+        data.forEach((newWord) => {
+          const isWordAlreadyIncluded = words.some(
+            (word) => word.text === newWord.text
+          )
+  
+          if (isWordAlreadyIncluded) {
+            setWords((prev) => {
+              const before = prev.find((word) => word.text === newWord.text)
+              const rest = prev.filter((word) => word.text !== newWord.text)
+  
+              return [
+                ...rest,
+                { text: before!.text, value: before!.value + newWord.value },
+              ]
+            })
+          } else if (words.length < 50) {
+            setWords((prev) => [...prev, newWord])
+          }
+        })
+      } catch (error) {
+        console.error("Error parsing room update:", error)
+      }
     })
-
+  
     return () => {
       socket.off("room-update")
     }
-  }, [words])
+  }, [words, socket])
 
   const fontScale = scaleLog({
     domain: [
@@ -74,7 +76,16 @@ const ClientPage = ({ topicName, initialData }: ClientPageProps) => {
 
   const { mutate, isPending } = useMutation({
     mutationFn: submitComment,
+    onSuccess: () => {
+      setInput("")
+    },
   })
+
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === "Enter" && !isPending) {
+      mutate({ comment: input, topicName })
+    }
+  }
 
   return (
     <div className="w-full flex flex-col items-center justify-center min-h-screen bg-grid-zinc-50 pb-20">
@@ -123,6 +134,7 @@ const ClientPage = ({ topicName, initialData }: ClientPageProps) => {
             <Input
               value={input}
               onChange={({ target }) => setInput(target.value)}
+              onKeyDown={handleKeyDown}
               placeholder={`${topicName} is absolutely...`}
             />
             <Button

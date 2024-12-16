@@ -11,7 +11,16 @@ const TopicCreator = () => {
 
   const { mutate, error, isPending } = useMutation({
     mutationFn: createTopic,
+    onSuccess: () => {
+      setInput("")
+    },
   })
+
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === "Enter" && !isPending) {
+      mutate({ topicName: input })
+    }
+  }
 
   return (
     <div className="mt-12 flex flex-col gap-2">
@@ -19,12 +28,15 @@ const TopicCreator = () => {
         <Input
           value={input}
           onChange={({ target }) => setInput(target.value)}
+          onKeyDown={handleKeyDown}
           className="bg-white min-w-64"
           placeholder="Enter topic here..."
         />
         <Button
           disabled={isPending}
-          onClick={() => mutate({ topicName: input })}
+          onClick={() => {
+            mutate({ topicName: input })
+          }}
         >
           Create
         </Button>
